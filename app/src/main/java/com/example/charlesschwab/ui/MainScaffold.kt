@@ -9,13 +9,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.example.charlesschwab.ui.markets.MarketsScreen
 import com.example.charlesschwab.ui.navigation.MainTab
 import com.example.charlesschwab.ui.summary.SummaryScreen
 import com.example.charlesschwab.ui.trade.TradeOrderTicketScreen
+import com.example.charlesschwab.ui.watchlist.WatchlistScreen
 
 @Composable
 fun MainScaffold() {
     var selectedTab by remember { mutableStateOf<MainTab>(MainTab.Summary) }
+    var tradeTicker by remember { mutableStateOf("AAPL") }
 
     Scaffold(
         bottomBar = {
@@ -54,9 +57,15 @@ fun MainScaffold() {
         Surface(modifier = Modifier.padding(innerPadding)) {
             when (selectedTab) {
                 MainTab.Summary -> SummaryScreen()
-                MainTab.Watchlist -> Text("Watchlist Screen (Implementation Pending)")
-                MainTab.Trade -> TradeOrderTicketScreen()
-                MainTab.Markets -> Text("Markets Screen (Implementation Pending)")
+                MainTab.Watchlist -> WatchlistScreen(onStockClick = { symbol -> 
+                    tradeTicker = symbol
+                    selectedTab = MainTab.Trade 
+                })
+                MainTab.Trade -> TradeOrderTicketScreen(
+                    ticker = tradeTicker,
+                    onClose = { selectedTab = MainTab.Summary }
+                )
+                MainTab.Markets -> MarketsScreen()
                 MainTab.More -> Text("More Options (Settings, Transfers, Help)")
             }
         }

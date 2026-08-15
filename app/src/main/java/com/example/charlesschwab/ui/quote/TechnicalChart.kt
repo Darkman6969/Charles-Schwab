@@ -39,10 +39,10 @@ fun TechnicalChart(
                 .pointerInput(Unit) {
                     detectDragGestures(
                         onDragStart = { offset ->
-                            selectedPointIndex = calculateIndex(offset.x, size.width, points.size)
+                            selectedPointIndex = calculateIndex(offset.x, size.width.toFloat(), points.size)
                         },
                         onDrag = { change, _ ->
-                            selectedPointIndex = calculateIndex(change.position.x, size.width, points.size)
+                            selectedPointIndex = calculateIndex(change.position.x, size.width.toFloat(), points.size)
                         },
                         onDragEnd = { selectedPointIndex = null },
                         onDragCancel = { selectedPointIndex = null }
@@ -50,7 +50,7 @@ fun TechnicalChart(
                 }
                 .pointerInput(Unit) {
                     detectTapGestures { offset ->
-                        selectedPointIndex = calculateIndex(offset.x, size.width, points.size)
+                        selectedPointIndex = calculateIndex(offset.x, size.width.toFloat(), points.size)
                     }
                 }
         ) {

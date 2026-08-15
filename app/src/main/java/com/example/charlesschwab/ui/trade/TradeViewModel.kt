@@ -1,15 +1,20 @@
 package com.example.charlesschwab.ui.trade
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.charlesschwab.domain.model.*
+import com.example.charlesschwab.domain.repository.StockRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class TradeViewModel @Inject constructor() : ViewModel() {
+class TradeViewModel @Inject constructor(
+    private val repository: StockRepository
+) : ViewModel() {
 
     private val _order = MutableStateFlow(
         OrderTicket(
@@ -37,5 +42,12 @@ class TradeViewModel @Inject constructor() : ViewModel() {
 
     fun updateOrderType(type: OrderType) {
         _order.value = _order.value.copy(orderType = type)
+    }
+
+    fun placeOrder(onComplete: () -> Unit) {
+        viewModelScope.launch {
+            repository.executeTrade(_order.value)
+            onComplete()
+        }
     }
 }

@@ -26,6 +26,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.charlesschwab.domain.model.OrderTiming
+import com.example.charlesschwab.domain.model.OrderType
+import com.example.charlesschwab.domain.model.TradeAction
 
 // --- Design Tokens (Overrides standard Material 3) ---
 val SchwabNavyToken = Color(0xFF0A1B29)
@@ -52,7 +56,8 @@ fun TradeOrderTicketScreen(
     currentPrice: Double = 178.25,
     bidPrice: Double = 178.20,
     askPrice: Double = 178.30,
-    onClose: () -> Unit = {}
+    onClose: () -> Unit = {},
+    viewModel: TradeViewModel = hiltViewModel()
 ) {
     var action by remember { mutableStateOf(OrderAction.BUY) }
     var quantity by remember { mutableStateOf("10") }
@@ -62,6 +67,12 @@ fun TradeOrderTicketScreen(
     var timeInForce by remember { mutableStateOf(TimeInForce.DAY) }
     
     var showReviewDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(ticker) {
+        viewModel.updateSymbol(ticker)
+        viewModel.updateQuantity(10.0, false) // Default quantity
+        viewModel.updateAction(TradeAction.BUY) // Default action
+    }
 
     val isDarkTheme = true // Hardcoded for preview, ideally use isSystemInDarkTheme()
     val bgColor = if (isDarkTheme) SchwabNavyToken else Color.White
@@ -96,7 +107,10 @@ fun TradeOrderTicketScreen(
             DenseLabel(text = "Action", textColor = textColor)
             ActionSelector(
                 selectedAction = action,
-                onActionSelected = { action = it }
+                onActionSelected = { 
+                    action = it
+                    viewModel.updateAction(TradeAction.valueOf(it.name))
+                }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -105,7 +119,11 @@ fun TradeOrderTicketScreen(
             DenseLabel(text = "Quantity (Shares)", textColor = textColor)
             DataEntryField(
                 value = quantity,
-                onValueChange = { quantity = it.filter { char -> char.isDigit() } },
+                onValueChange = { 
+                    val filtered = it.filter { char -> char.isDigit() }
+                    quantity = filtered
+                    viewModel.updateQuantity(filtered.toDoubleOrNull() ?: 0.0, false)
+                },
                 textColor = textColor,
                 dividerColor = dividerColor
             )
@@ -117,7 +135,10 @@ fun TradeOrderTicketScreen(
             DropdownSelector(
                 options = OrderTypeLocal.entries.map { it.name.replace("_", " ") },
                 selectedIndex = orderType.ordinal,
-                onOptionSelected = { orderType = OrderTypeLocal.entries[it] },
+                onOptionSelected = { 
+                    orderType = OrderTypeLocal.entries[it]
+                    viewModel.updateOrderType(OrderType.valueOf(OrderTypeLocal.entries[it].name))
+                },
                 textColor = textColor,
                 dividerColor = dividerColor
             )
@@ -179,7 +200,12 @@ fun TradeOrderTicketScreen(
             limitPrice = limitPrice,
             stopPrice = stopPrice,
             timeInForce = timeInForce,
-            onConfirm = { showReviewDialog = false; onClose() },
+            onConfirm = { 
+                viewModel.placeOrder(onComplete = {
+                    showReviewDialog = false
+                    onClose()
+                })
+            },
             onDismiss = { showReviewDialog = false }
         )
     }

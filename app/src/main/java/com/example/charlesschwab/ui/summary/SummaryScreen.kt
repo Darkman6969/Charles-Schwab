@@ -37,6 +37,11 @@ fun SummaryScreen(
         
         items(accounts) { account ->
             AccountRow(account)
+            if (account.holdings.isNotEmpty()) {
+                account.holdings.forEach { holding ->
+                    HoldingRow(holding)
+                }
+            }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp)
         }
         
@@ -86,17 +91,34 @@ fun AccountRow(account: Account) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column {
-            Text(account.name, style = MaterialTheme.typography.titleMedium)
+            Text(account.name, style = MaterialTheme.typography.titleMedium, color = SchwabNavy)
             Text(account.maskedId, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
         }
         Column(horizontalAlignment = Alignment.End) {
-            Text(formatCurrency(account.balance), style = MaterialTheme.typography.titleMedium)
+            Text(formatCurrency(account.balance), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text(
                 text = "${if (account.dayChange >= 0) "+" else ""}${formatCurrency(account.dayChange)}",
                 color = if (account.dayChange >= 0) BullishGreen else Color.Red,
                 style = MaterialTheme.typography.bodySmall
             )
         }
+    }
+}
+
+@Composable
+fun HoldingRow(holding: com.example.charlesschwab.domain.model.Holding) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 32.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text(holding.symbol, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+            Text("${holding.shares.toInt()} Shares", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+        }
+        Text(formatCurrency(holding.currentPrice * holding.shares), style = MaterialTheme.typography.bodyMedium)
     }
 }
 

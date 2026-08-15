@@ -4,7 +4,10 @@ import com.example.charlesschwab.domain.model.*
 import com.example.charlesschwab.domain.repository.StockRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.random.Random
@@ -12,49 +15,96 @@ import kotlin.random.Random
 @Singleton
 class MockStockRepository @Inject constructor() : StockRepository {
 
-    private val symbols = listOf("AAPL", "MSFT", "GOOGL", "AMZN", "SCHD", "VOO")
-    
-    override fun getAccounts(): Flow<List<Account>> = flow {
-        val accounts = listOf(
-            Account("1", "Individual Brokerage", "*4291", 125430.55, 1240.10, 0.99),
-            Account("2", "Roth IRA", "*8822", 85000.00, -450.20, -0.53),
-            Account("3", "Cash Management", "*1102", 5200.45, 0.00, 0.00)
+    private val symbols = listOf(
+        "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META",
+        "VOO", "SCHD", "QQQ", "DIA",
+        "SPX", "DJIA", "IXIC",
+        "BRK.B", "JPM", "UNH", "V", "JNJ", "WMT", "PG",
+        "eAPRK"
+    )
+
+    private val _accounts = MutableStateFlow(
+        listOf(
+            Account(
+                id = "1",
+                name = "Brokerage Account",
+                maskedId = "*8731",
+                balance = 1470.00, // 1400 + 5% gain
+                dayChange = 70.00,
+                dayChangePercent = 5.0,
+                holdings = listOf(
+                    Holding("eAPRK", 200.0, 7.0, 7.35) // 7.35 is 5% above 7.0
+                )
+            )
         )
-        emit(accounts)
-    }
+    )
+    
+    override fun getAccounts(): Flow<List<Account>> = _accounts.asStateFlow()
 
     override fun getWatchlist(): Flow<List<StockQuote>> = flow {
         while (true) {
             val quotes = symbols.map { createMockQuote(it) }
             emit(quotes)
-            delay(3000) // Update every 3 seconds
+            delay(3000)
         }
     }
 
     override fun getStockQuote(symbol: String): Flow<StockQuote> = flow {
         while (true) {
             emit(createMockQuote(symbol))
-            delay(2000) // Ticker updates faster for detail view
+            delay(2000)
         }
     }
 
-    override suspend fun executeTrade(order: OrderTicket): Result<Unit> = Result.success(Unit)
+    override suspend fun executeTrade(order: OrderTicket): Result<Unit> {
+        _accounts.update { currentAccounts ->
+            currentAccounts.map { account ->
+                if (account.id == "1") {
+                    val price = getBasePrice(order.symbol)
+                    val totalValueChange = order.quantity * price
+                    
+                    val newHoldings = account.holdings.toMutableList()
+                    val existingHoldingIndex = newHoldings.indexOfFirst { it.symbol == order.symbol }
+                    
+                    if (order.action == TradeAction.BUY) {
+                        if (existingHoldingIndex != -1) {
+                            val h = newHoldings[existingHoldingIndex]
+                            newHoldings[existingHoldingIndex] = h.copy(
+                                shares = h.shares + order.quantity,
+                                currentPrice = price
+                            )
+                        } else {
+                            newHoldings.add(Holding(order.symbol, order.quantity, price, price))
+                        }
+                    } else if (order.action == TradeAction.SELL) {
+                        if (existingHoldingIndex != -1) {
+                            val h = newHoldings[existingHoldingIndex]
+                            val finalShares = h.shares - order.quantity
+                            if (finalShares <= 0) {
+                                newHoldings.removeAt(existingHoldingIndex)
+                            } else {
+                                newHoldings[existingHoldingIndex] = h.copy(shares = finalShares, currentPrice = price)
+                            }
+                        }
+                    }
+
+                    val newBalance = newHoldings.sumOf { it.shares * it.currentPrice }
+                    account.copy(
+                        balance = newBalance,
+                        holdings = newHoldings,
+                        dayChange = newBalance - 1400.00, // Relative to original cost basis
+                        dayChangePercent = ((newBalance - 1400.00) / 1400.00) * 100
+                    )
+                } else account
+            }
+        }
+        return Result.success(Unit)
+    }
 
     private fun createMockQuote(symbol: String): StockQuote {
-        val basePrice = when(symbol) {
-            "AAPL" -> 220.50
-            "MSFT" -> 410.15
-            "GOOGL" -> 175.30
-            "AMZN" -> 185.00
-            "SCHD" -> 82.40
-            "VOO" -> 510.00
-            else -> 100.00
-        }
-        
+        val basePrice = getBasePrice(symbol)
         val randomVar = Random.nextDouble(-1.5, 1.5)
         val lastPrice = basePrice + randomVar
-        val bid = lastPrice - 0.05
-        val ask = lastPrice + 0.05
         
         return StockQuote(
             symbol = symbol,
@@ -62,12 +112,38 @@ class MockStockRepository @Inject constructor() : StockRepository {
             lastPrice = lastPrice,
             change = randomVar,
             changePercent = (randomVar / basePrice) * 100,
-            bid = bid,
-            ask = ask,
+            bid = lastPrice - 0.05,
+            ask = lastPrice + 0.05,
             volume = 45000000L + Random.nextLong(1000000L),
             marketStatus = MarketStatus.OPEN,
             history = createMockHistory(basePrice)
         )
+    }
+
+    private fun getBasePrice(symbol: String) = when(symbol) {
+        "AAPL" -> 228.22
+        "MSFT" -> 416.32
+        "GOOGL" -> 165.45
+        "AMZN" -> 188.10
+        "NVDA" -> 118.20
+        "TSLA" -> 245.50
+        "META" -> 530.10
+        "VOO" -> 515.20
+        "SCHD" -> 84.15
+        "QQQ" -> 485.60
+        "DIA" -> 412.30
+        "SPX" -> 5620.10
+        "DJIA" -> 41390.50
+        "IXIC" -> 17680.20
+        "BRK.B" -> 465.10
+        "JPM" -> 210.40
+        "UNH" -> 585.20
+        "V" -> 280.15
+        "JNJ" -> 165.30
+        "WMT" -> 78.45
+        "PG" -> 170.20
+        "eAPRK" -> 7.35 // Reflecting the 5% gain in base price
+        else -> 100.00
     }
 
     private fun getCompanyName(symbol: String) = when(symbol) {
@@ -75,8 +151,24 @@ class MockStockRepository @Inject constructor() : StockRepository {
         "MSFT" -> "Microsoft Corp."
         "GOOGL" -> "Alphabet Inc."
         "AMZN" -> "Amazon.com Inc."
-        "SCHD" -> "Schwab US Dividend Equity ETF"
+        "NVDA" -> "NVIDIA Corp."
+        "TSLA" -> "Tesla, Inc."
+        "META" -> "Meta Platforms, Inc."
         "VOO" -> "Vanguard S&P 500 ETF"
+        "SCHD" -> "Schwab US Dividend Equity ETF"
+        "QQQ" -> "Invesco QQQ Trust"
+        "DIA" -> "SPDR Dow Jones Industrial Average ETF"
+        "SPX" -> "S&P 500 Index"
+        "DJIA" -> "Dow Jones Industrial Average"
+        "IXIC" -> "NASDAQ Composite"
+        "BRK.B" -> "Berkshire Hathaway Inc."
+        "JPM" -> "JPMorgan Chase & Co."
+        "UNH" -> "UnitedHealth Group Inc."
+        "V" -> "Visa Inc."
+        "JNJ" -> "Johnson & Johnson"
+        "WMT" -> "Walmart Inc."
+        "PG" -> "Procter & Gamble Co."
+        "eAPRK" -> "eAPRK Corp"
         else -> "Unknown Company"
     }
 
@@ -84,20 +176,12 @@ class MockStockRepository @Inject constructor() : StockRepository {
         val points = mutableListOf<ChartPoint>()
         var currentPrice = basePrice - 10.0
         val now = System.currentTimeMillis()
-        
         for (i in 0 until 50) {
             val open = currentPrice
             val high = open + Random.nextDouble(2.0)
             val low = open - Random.nextDouble(2.0)
             val close = (high + low) / 2
-            points.add(ChartPoint(
-                timestamp = now - (50 - i) * 3600000L,
-                open = open,
-                high = high,
-                low = low,
-                close = close,
-                volume = 1000000L + Random.nextLong(500000L)
-            ))
+            points.add(ChartPoint(now - (50 - i) * 3600000L, open, high, low, close, 1000000L + Random.nextLong(500000L)))
             currentPrice = close
         }
         return points
