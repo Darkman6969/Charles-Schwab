@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "425083894782",
+    "project_id": "charles-schwab-clone",
+    "storage_bucket": "charles-schwab-clone.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:425083894782:android:94bfa56033cc4f749e1eaf",
+        "android_client_info": {
+          "package_name": "com.example.charlesschwab"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCxxnWvpHyjImoMy5KMJYj921J-LVA_sOo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
