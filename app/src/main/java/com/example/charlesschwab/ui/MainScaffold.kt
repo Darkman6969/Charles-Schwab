@@ -10,13 +10,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.example.charlesschwab.ui.markets.MarketsScreen
+import com.example.charlesschwab.ui.more.MoreScreen
 import com.example.charlesschwab.ui.navigation.MainTab
 import com.example.charlesschwab.ui.summary.SummaryScreen
 import com.example.charlesschwab.ui.trade.TradeOrderTicketScreen
 import com.example.charlesschwab.ui.watchlist.WatchlistScreen
 
 @Composable
-fun MainScaffold() {
+fun MainScaffold(
+    onLogout: () -> Unit = {}
+) {
     var selectedTab by remember { mutableStateOf<MainTab>(MainTab.Summary) }
     var tradeTicker by remember { mutableStateOf("AAPL") }
 
@@ -66,7 +69,7 @@ fun MainScaffold() {
                     onClose = { selectedTab = MainTab.Summary }
                 )
                 MainTab.Markets -> MarketsScreen()
-                MainTab.More -> Text("More Options (Settings, Transfers, Help)")
+                MainTab.More -> MoreScreen(onLogout = onLogout)
             }
         }
     }

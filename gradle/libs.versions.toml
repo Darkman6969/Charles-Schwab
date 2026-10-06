@@ -1,5 +1,5 @@
 [versions]
-agp = "8.6.1"
+agp = "8.13.2"
 coreKtx = "1.13.1"
 junit = "4.13.2"
 junitVersion = "1.2.1"
@@ -14,7 +14,7 @@ serialization = "1.7.1"
 biometric = "1.1.0"
 hiltNavigationCompose = "1.2.0"
 ksp = "2.0.21-1.0.25"
-firebaseBom = "34.17.0"
+firebaseBom = "33.1.1"
 googleServices = "4.5.0"
 
 [libraries]
@@ -40,9 +40,9 @@ navigation-compose = { group = "androidx.navigation", name = "navigation-compose
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
 androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
-firebase-database = { group = "com.google.firebase", name = "firebase-database-ktx" }
-firebase-auth = { group = "com.google.firebase", name = "firebase-auth-ktx" }
-firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics-ktx" }
+firebase-database = { group = "com.google.firebase", name = "firebase-database" }
+firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

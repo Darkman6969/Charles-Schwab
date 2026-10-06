@@ -13,7 +13,7 @@ import javax.inject.Singleton
 import kotlin.random.Random
 
 @Singleton
-class MockStockRepository @Inject constructor() : StockRepository {
+class   MockStockRepository @Inject constructor() : StockRepository {
 
     private val symbols = listOf(
         "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META",
@@ -29,11 +29,11 @@ class MockStockRepository @Inject constructor() : StockRepository {
                 id = "1",
                 name = "Brokerage Account",
                 maskedId = "*8731",
-                balance = 1470.00, // 1400 + 5% gain
-                dayChange = 70.00,
-                dayChangePercent = 5.0,
+                balance = 14823.80, // 500 shares * $29.647598173
+                dayChange = 3673.80, // 14823.80 - 11150.00 cost basis
+                dayChangePercent = 32.95,
                 holdings = listOf(
-                    Holding("eAPRK", 200.0, 7.0, 7.35) // 7.35 is 5% above 7.0
+                    Holding("eAPRK", 500.0, 22.3, 29.647598173) // 500 shares @ avg cost $22.30, current price $29.647598173
                 )
             )
         )
@@ -92,8 +92,8 @@ class MockStockRepository @Inject constructor() : StockRepository {
                     account.copy(
                         balance = newBalance,
                         holdings = newHoldings,
-                        dayChange = newBalance - 1400.00, // Relative to original cost basis
-                        dayChangePercent = ((newBalance - 1400.00) / 1400.00) * 100
+                        dayChange = newBalance - 11150.00, // Relative to updated cost basis (450 * 24.0 + 50 * 7.0)
+                        dayChangePercent = ((newBalance - 11150.00) / 11150.00) * 100
                     )
                 } else account
             }
@@ -142,7 +142,7 @@ class MockStockRepository @Inject constructor() : StockRepository {
         "JNJ" -> 165.30
         "WMT" -> 78.45
         "PG" -> 170.20
-        "eAPRK" -> 7.35 // Reflecting the 5% gain in base price
+        "eAPRK" -> 29.647598173 // Updated base price to 29.647598173
         else -> 100.00
     }
 

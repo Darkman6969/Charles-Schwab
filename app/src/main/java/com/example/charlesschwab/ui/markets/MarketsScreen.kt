@@ -21,6 +21,8 @@ fun MarketsScreen(
     viewModel: MarketsViewModel = hiltViewModel()
 ) {
     val indices by viewModel.marketIndices.collectAsState()
+    val gainers by viewModel.topGainers.collectAsState()
+    val active by viewModel.mostActive.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
         Text(
@@ -32,8 +34,29 @@ fun MarketsScreen(
         )
         
         LazyColumn(modifier = Modifier.fillMaxSize()) {
+            item {
+                Text("Indices", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold)
+            }
             items(indices) { index ->
                 IndexRow(index)
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp)
+            }
+            
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Top Gainers", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold)
+            }
+            items(gainers) { stock ->
+                StockRow(stock)
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp)
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Most Active", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold)
+            }
+            items(active) { stock ->
+                StockRow(stock)
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp)
             }
             
@@ -41,6 +64,30 @@ fun MarketsScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 MarketNewsSection()
             }
+        }
+    }
+}
+
+@Composable
+fun StockRow(stock: StockQuote) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text(stock.symbol, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stock.companyName, style = MaterialTheme.typography.bodySmall, color = Color.Gray, maxLines = 1)
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            Text(formatCurrency(stock.lastPrice).replace("$", ""), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                text = "${if (stock.change >= 0) "+" else ""}${String.format("%.2f", stock.change)} (${String.format("%.2f", stock.changePercent)}%)",
+                color = if (stock.change >= 0) BullishGreen else Color.Red,
+                style = MaterialTheme.typography.bodySmall
+            )
         }
     }
 }

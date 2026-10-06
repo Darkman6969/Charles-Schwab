@@ -25,4 +25,28 @@ class MarketsViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+    val topGainers: StateFlow<List<StockQuote>> = repository.getWatchlist()
+        .map { quotes -> 
+            quotes.filter { it.symbol !in indexSymbols }
+                .sortedByDescending { it.changePercent }
+                .take(5)
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    val mostActive: StateFlow<List<StockQuote>> = repository.getWatchlist()
+        .map { quotes -> 
+            quotes.filter { it.symbol !in indexSymbols }
+                .sortedByDescending { it.volume }
+                .take(5)
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 }
